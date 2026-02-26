@@ -1,0 +1,123 @@
+{% extends 'fees/base.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="card group hover:scale-[1.02] transition-all cursor-default overflow-hidden relative">
+            <div class="absolute -right-3 -top-3 w-20 h-20 bg-indigo-50 rounded-full opacity-60 group-hover:scale-150 transition-transform duration-500"></div>
+            <div class="relative z-10 flex flex-col gap-3"><div class="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-xl group-hover:bg-indigo-600 group-hover:text-white transition-all" style="color:var(--accent)">&#127891;</div><div><span class="block text-3xl font-black text-slate-900">{{ total_students }}</span><span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Total Students</span></div></div>
+        </div>
+        <div class="card group hover:scale-[1.02] transition-all cursor-default overflow-hidden relative">
+            <div class="absolute -right-3 -top-3 w-20 h-20 bg-emerald-50 rounded-full opacity-60 group-hover:scale-150 transition-transform duration-500"></div>
+            <div class="relative z-10 flex flex-col gap-3"><div class="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-xl group-hover:bg-emerald-600 group-hover:text-white transition-all">&#128176;</div><div><span class="block text-3xl font-black text-slate-900">${{ collected }}</span><span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Collected This Month</span></div></div>
+        </div>
+        <div class="card group hover:scale-[1.02] transition-all cursor-default overflow-hidden relative">
+            <div class="absolute -right-3 -top-3 w-20 h-20 bg-rose-50 rounded-full opacity-60 group-hover:scale-150 transition-transform duration-500"></div>
+            <div class="relative z-10 flex flex-col gap-3"><div class="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-xl group-hover:bg-rose-600 group-hover:text-white transition-all">&#128221;</div><div><span class="block text-3xl font-black text-slate-900">{{ pending }}</span><span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Pending Records</span></div></div>
+        </div>
+        <div class="card group hover:scale-[1.02] transition-all cursor-default overflow-hidden relative">
+            <div class="absolute -right-3 -top-3 w-20 h-20 bg-amber-50 rounded-full opacity-60 group-hover:scale-150 transition-transform duration-500"></div>
+            <div class="relative z-10 flex flex-col gap-3"><div class="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-xl group-hover:bg-amber-600 group-hover:text-white transition-all">&#128200;</div><div><span class="block text-3xl font-black text-slate-900">{{ collection_rate }}%</span><span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Collection Rate</span></div></div>
+        </div>
+    </div>
+
+    <!-- Chart + Quick Actions -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card">
+            <div class="mb-6"><h3 class="text-lg font-black text-slate-900">Revenue Trends</h3><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Last 6 Months Collection</p></div>
+            <div class="h-[260px]"><canvas id="revenueChart"></canvas></div>
+        </div>
+        <div class="space-y-4">
+            <h3 class="text-lg font-black text-slate-900 px-1">Quick Actions</h3>
+            <a href="{% url 'fees:manage_form' 'student' %}" class="group flex items-center gap-4 p-5 bg-white border border-slate-200 rounded-2xl hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-50 transition-all">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-2xl group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 transition-all">&#10024;</div>
+                <div><span class="block font-black text-slate-900 text-sm">Onboard Student</span><span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">New Admission</span></div>
+            </a>
+            <a href="{% url 'fees:export_fees_excel' %}" class="group flex items-center gap-4 p-5 bg-white border border-slate-200 rounded-2xl hover:border-amber-400 hover:shadow-xl hover:shadow-amber-50 transition-all">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-2xl group-hover:bg-amber-600 group-hover:text-white group-hover:scale-110 transition-all">&#128229;</div>
+                <div><span class="block font-black text-slate-900 text-sm">Export Report</span><span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Download Excel</span></div>
+            </a>
+            <a href="{% url 'fees:monthly_fees' %}" class="group flex items-center gap-4 p-5 bg-white border border-slate-200 rounded-2xl hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-50 transition-all">
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-2xl group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110 transition-all">&#128197;</div>
+                <div><span class="block font-black text-slate-900 text-sm">Monthly Summary</span><span class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">View All Months</span></div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between px-1"><h3 class="text-lg font-black text-slate-900">Recent Transactions</h3><a href="{% url 'fees:manage_list' 'feepayment' %}" class="px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all">View All</a></div>
+        <div class="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead><tr class="bg-slate-50/70"><th class="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Student</th><th class="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Amount</th><th class="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Mode</th><th class="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Date</th><th class="px-6 py-4 text-right text-[9px] font-black text-slate-400 uppercase tracking-widest">Action</th></tr></thead>
+                    <tbody class="divide-y divide-slate-50">
+                        {% for payment in recent_payments %}
+                        <tr class="hover:bg-slate-50/50 transition-colors group">
+                            <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shadow-sm transition-all" :style="'background: var(--accent); color: var(--contrast)'">{{ payment.student.name|slice:":1"|upper }}</div><div><span class="block font-black text-slate-800 text-sm">{{ payment.student.name }}</span><span class="block text-[9px] font-bold text-slate-400 uppercase">Roll: #{{ payment.student.roll_no }}</span></div></div></td>
+                            <td class="px-6 py-4"><span class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-black text-xs">+${{ payment.amount }}</span></td>
+                            <td class="px-6 py-4 text-sm font-bold text-slate-600">{{ payment.get_payment_mode_display|default:payment.payment_mode }}</td>
+                            <td class="px-6 py-4 text-xs font-bold text-slate-400">{{ payment.date|date:"F d, Y" }}</td>
+                            <td class="px-6 py-4 text-right"><a href="{% url 'fees:generate_receipt' payment.id %}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm">&#128230; Receipt</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="px-6 py-12 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">No recent transactions</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('revenueChart');
+    if (!ctx) return;
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4f46e5';
+    const myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels_json|safe }},
+            datasets: [{
+                label: 'Collection',
+                data: {{ chart_data_json|safe }},
+                borderColor: accent,
+                backgroundColor: accent + '18',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: accent,
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { weight: '700', size: 11 } } },
+                x: { grid: { display: false }, ticks: { font: { weight: '700', size: 11 } } }
+            }
+        }
+    });
+
+    window.addEventListener('theme-changed', (e) => {
+        const newAccent = e.detail.theme;
+        myChart.data.datasets[0].borderColor = newAccent;
+        myChart.data.datasets[0].backgroundColor = newAccent + '18';
+        myChart.data.datasets[0].pointBorderColor = newAccent;
+        myChart.update();
+    });
+});
+</script>
+{% endblock %}

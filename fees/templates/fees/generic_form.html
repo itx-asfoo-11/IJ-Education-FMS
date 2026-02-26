@@ -1,0 +1,45 @@
+{% extends 'fees/base.html' %}
+{% load fees_extras %}
+{% block title %}{{ title }}{% endblock %}
+{% block header_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xl">
+        <div class="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+            <div>
+                <h2 class="text-2xl font-black text-slate-900">{{ title }}</h2>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{{ model_name|verbose_name }} Form</p>
+            </div>
+            <a href="{% url 'fees:manage_list' model_name %}" class="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center text-slate-400 hover:text-red-500 transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></a>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="px-8 py-8">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for f in my_form %}
+                <div class="{% if f.field.widget.input_type == 'textarea' or f.name == 'address' or f.name == 'notes' %}md:col-span-2{% endif %}">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{{ f.label }}</label>
+                    {% if f.errors %}<p class="text-xs font-bold text-red-500 mb-1">{{ f.errors.0 }}</p>{% endif %}
+                    {{ f }}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-8 flex items-center justify-end gap-3 pt-6 border-t border-slate-50">
+                <a href="{% url 'fees:manage_list' model_name %}" class="px-6 py-2.5 text-slate-400 font-black text-xs uppercase tracking-widest hover:text-slate-700 transition-all">Cancel</a>
+                <button type="submit" class="px-8 py-3 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg active:scale-95" style="background: var(--accent)">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+input[type="text"],input[type="email"],input[type="number"],input[type="password"],input[type="date"],select,textarea { display:block; width:100%; padding:0.75rem 1rem; background:#f8fafc; border:2px solid transparent; border-radius:1rem; font-weight:700; font-size:0.875rem; color:#1e293b; outline:none; transition:all 0.2s; font-family:inherit; }
+input:focus,select:focus,textarea:focus { background:#fff; border-color:var(--accent); box-shadow:0 0 0 4px rgba(79,70,229,0.08); }
+input::placeholder { color:#cbd5e1; font-weight:500; }
+input[type="checkbox"] { width:1.125rem; height:1.125rem; cursor:pointer; }
+select option { font-weight:600; }
+textarea { min-height:100px; resize:vertical; }
+</style>
+{% endblock %}

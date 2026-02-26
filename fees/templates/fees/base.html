@@ -1,0 +1,230 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IJ Education System{% endblock %} | FEES MANAGEMENT SYSTEM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --accent: #4f46e5;
+            --contrast: #ffffff;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        .nav-active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--contrast) !important;
+            font-weight: 800;
+            border-right: 4px solid var(--contrast);
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #f1f5f9;
+            border-radius: 24px;
+            padding: 1.5rem;
+            transition: all .3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
+        }
+
+        .theme-transition {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+    </style>
+</head>
+
+<body x-data="themeManager()" x-init="init()" class="theme-transition"
+    :style="'--accent:' + theme + '; --contrast:' + contrast">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside :class="open ? 'w-64' : 'w-0'"
+            class="flex-shrink-0 h-full theme-transition flex flex-col transition-all duration-300 overflow-hidden z-40 border-r border-black/5"
+            :style="'background:' + theme + '; color:' + contrast">
+            <div class="px-5 py-5 flex items-center gap-3 border-b border-white/10">
+                <img src="{% static 'fees/img/logo.png' %}"
+                    class="w-10 h-10 rounded-full object-cover shadow-lg border-2 border-white/20">
+                <div>
+                    <p class="font-black text-sm uppercase tracking-tight">IJ Education System</p>
+                    <p class="text-[9px] font-bold opacity-70 uppercase tracking-widest">FEES MANAGEMENT SYSTEM</p>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+                {% for group in SIDEBAR_CONFIG %}
+                <div>
+                    <p class="text-[9px] font-black opacity-50 uppercase tracking-widest px-3 mb-2">{{ group.title }}
+                    </p>
+                    <div class="space-y-1">
+                        {% for item in group.items %}
+                        <a href="{{ item.url }}"
+                            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if item.is_active %}nav-active{% else %}opacity-70 hover:opacity-100 hover:bg-white/5{% endif %}">
+                            <span>{{ item.icon }}</span>
+                            <span>{{ item.label }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Theme Picker -->
+            <div class="px-3 py-4 border-t border-white/10 bg-black/5">
+                <p class="text-[9px] font-black opacity-50 uppercase tracking-widest px-3 mb-3">Theme Colors</p>
+                <div class="px-3 grid grid-cols-5 gap-2">
+                    <template
+                        x-for="c in ['#4f46e5','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#6366f1','#14b8a6','#06b6d4']">
+                        <button @click="updateTheme(c)"
+                            :class="theme===c ? 'ring-2 ring-offset-2 ring-white scale-110' : ''"
+                            class="w-6 h-6 rounded-lg transition-all hover:scale-125 shadow-sm"
+                            :style="'background:'+c"></button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="px-3 py-4 border-t border-white/10 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shadow-inner"
+                    :style="'background:rgba(255,255,255,0.2); color:' + contrast">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-black truncate">{{ request.user.username }}</p>
+                    <p class="text-[9px] font-bold opacity-60 uppercase tracking-widest">
+                        {% if request.user.is_staff %}Admin{% else %}Staff{% endif %}
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+            <header
+                class="h-14 theme-transition border-b border-black/5 flex items-center justify-between px-6 flex-shrink-0 z-30 shadow-sm"
+                :style="'background:' + theme + '; color:' + contrast">
+                <div class="flex items-center gap-4">
+                    <button @click="open=!open" class="p-2 rounded-xl hover:bg-white/10 transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-base font-black tracking-tight">{% block header_title %}Dashboard{% endblock %}</h1>
+                </div>
+                <div class="flex items-center gap-5">
+                    <span class="hidden sm:block text-[10px] font-black opacity-70 uppercase tracking-widest">
+                        {% now "F d, Y" %}
+                    </span>
+                    <a href="{% url 'fees:logout' %}"
+                        class="p-2 rounded-xl hover:bg-rose-500 hover:text-white transition-all" title="Logout">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                    </a>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 md:p-8">
+                {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for message in messages %}
+                    <div
+                        class="flex items-center gap-3 p-4 rounded-2xl border animate-in fade-in slide-in-from-top-4 duration-300 {% if 'success' in message.tags %}bg-emerald-50 border-emerald-100 text-emerald-700{% else %}bg-rose-50 border-rose-100 text-rose-700{% endif %}">
+                        <p class="text-sm font-bold">{{ message }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function themeManager() {
+            return {
+                open: true,
+                theme: localStorage.getItem('fms_theme') || '#4f46e5',
+                contrast: '#ffffff',
+                init() {
+                    this.updateContrast();
+                    document.documentElement.style.setProperty('--accent', this.theme);
+                    document.documentElement.style.setProperty('--contrast', this.contrast);
+                    window.addEventListener('resize', () => { if (window.innerWidth < 1024) this.open = false; });
+                },
+                updateTheme(c) {
+                    this.theme = c;
+                    localStorage.setItem('fms_theme', c);
+                    this.updateContrast();
+                    document.documentElement.style.setProperty('--accent', c);
+                    document.documentElement.style.setProperty('--contrast', this.contrast);
+                    // Dispatch event for charts
+                    window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: c, contrast: this.contrast } }));
+                },
+                updateContrast() {
+                    const hex = this.theme.replace('#', '');
+                    const r = parseInt(hex.substring(0, 2), 16);
+                    const g = parseInt(hex.substring(2, 4), 16);
+                    const b = parseInt(hex.substring(4, 6), 16);
+                    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+                    this.contrast = (yiq >= 128) ? '#1e293b' : '#ffffff';
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--accent) !important;
+            ring: 4px;
+            ring-color: var(--accent);
+            opacity: 0.1;
+        }
+
+        button[type="submit"],
+        .btn-primary {
+            background: var(--accent) !important;
+            color: var(--contrast) !important;
+        }
+    </style>
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | IJ Education System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #f8fafc 100%);
+        }
+
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 30px #f8fafc inset !important;
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-10">
+            <img src="{% static 'fees/img/logo.png' %}"
+                class="w-24 h-24 rounded-full mx-auto object-cover shadow-2xl border-4 border-white mb-5">
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight text-center">IJ Education System</h1>
+            <p class="text-[10px] font-black text-slate-400 mt-2 uppercase tracking-[0.2em] text-center">FEES MANAGEMENT
+                SYSTEM</p>
+        </div>
+
+        <!-- Card -->
+        <div class="bg-white rounded-[32px] shadow-2xl shadow-indigo-100/50 p-10 border border-slate-100">
+            <h2 class="text-xl font-black text-slate-900 mb-2">Welcome Back</h2>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">Sign in to your account</p>
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="mb-4 p-4 rounded-xl bg-red-50 border border-red-200">
+                    <p class="text-sm text-red-600 font-medium">{{ message }}</p>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                <div>
+                    <label
+                        class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Username</label>
+                    <input type="text" name="username" id="id_username" required placeholder="Enter username"
+                        class="w-full px-5 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all placeholder-slate-300">
+                </div>
+                <div>
+                    <label
+                        class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Password</label>
+                    <input type="password" name="password" id="id_password" required placeholder="Enter password"
+                        class="w-full px-5 py-4 bg-slate-50 border-2 border-transparent rounded-2xl font-bold text-slate-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition-all placeholder-slate-300">
+                </div>
+                <button type="submit" id="login-btn"
+                    class="w-full py-4 bg-indigo-600 hover:bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-xl shadow-indigo-100 active:scale-95">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="text-center mt-6">
+                <a href="{% url 'fees:forgot_password' %}"
+                    class="text-xs font-black text-indigo-600 hover:text-slate-900 uppercase tracking-widest transition-colors">Forgot
+                    Password?</a>
+            </div>
+        </div>
+
+        <p class="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-8">&copy; {% now "Y" %}
+            IJ Education System. All rights reserved.</p>
+    </div>
+</body>
+
+</html>

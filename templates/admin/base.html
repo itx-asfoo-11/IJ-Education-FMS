@@ -1,0 +1,538 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:" en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl" {% endif %}>
+
+<head>
+    <title>{% block title %}{% endblock %} | FMS ADMIN</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static " admin/css/base.css" %}">
+    {% block extrastyle %}{% endblock %}
+    {% if LANGUAGE_BIDI %}
+    <link rel="stylesheet" href="{% static " admin/css/rtl.css" %}">{% endif %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        (function () {
+            const theme = localStorage.getItem('fms-theme') || '{{ user.theme_preference|default:"midnight-blue" }}';
+            document.documentElement.setAttribute('data-theme', theme.trim());
+        })();
+
+        function sidebarState() {
+            return {
+                panelOpen: false,
+                currentTheme: localStorage.getItem('fms-theme') || '{{ user.theme_preference|default:"midnight-blue" }}',
+                themes: [
+                    { key: 'midnight-blue', color: '#1e293b' }, { key: 'clean-light', color: '#ffffff' }, { key: 'royal-purple', color: '#5b21b6' },
+                    { key: 'rose-gold', color: '#881337' }, { key: 'sunset-orange', color: '#9a3412' }, { key: 'ocean-blue', color: '#0c4a6e' },
+                    { key: 'forest-green', color: '#14532d' }, { key: 'crimson-red', color: '#7f1d1d' }, { key: 'gold-standard', color: '#713f12' },
+                    { key: 'chocolate-brown', color: '#431407' }
+                ],
+                init() {
+                    this.$watch('currentTheme', v => document.documentElement.setAttribute('data-theme', v));
+                },
+                setTheme(t) {
+                    this.currentTheme = t;
+                    localStorage.setItem('fms-theme', t);
+                    document.documentElement.setAttribute('data-theme', t);
+                    fetch('{% url "fees:set_theme" %}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({ theme: t })
+                    });
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --theme-primary: #1e293b;
+            --theme-accent: #3b82f6;
+            --theme-bg: #0f172a;
+            --theme-text: #f8fafc;
+            --page-bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            /* Global theme targets */
+            --sidebar-bg: var(--theme-bg);
+            --header-bg: var(--theme-primary);
+            --header-text: var(--theme-text);
+            --btn-bg: var(--theme-accent);
+            --link-color: var(--theme-text);
+            --active-bg: rgba(255,255,255,0.12);
+            --active-text: #ffffff;
+            --content-text: var(--theme-text);
+        }
+
+        [data-theme='midnight-blue'] {
+            --theme-primary: #1e293b;
+            --theme-accent: #3b82f6;
+            --theme-bg: #0f172a;
+            --theme-text: #f8fafc;
+            --page-bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --sidebar-bg: #0f172a;
+            --header-bg: #1e293b;
+            --header-text: #f8fafc;
+            --btn-bg: #3b82f6;
+            --link-color: #f8fafc;
+            --active-bg: rgba(255,255,255,0.12);
+            --active-text: #ffffff;
+            --content-text: #f8fafc;
+        }
+
+        [data-theme='clean-light'] {
+            --theme-primary: #ffffff;
+            --theme-accent: #2563eb;
+            --theme-bg: #ffffff;
+            --theme-text: #0f172a;
+            --page-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --sidebar-bg: #ffffff;
+            --header-bg: #ffffff;
+            --header-text: #0f172a;
+            --btn-bg: #2563eb;
+            --link-color: #0f172a;
+            --active-bg: rgba(37,99,235,0.08);
+            --active-text: #0f172a;
+            --content-text: #0f172a;
+        }
+
+        [data-theme='royal-purple'] {
+            --theme-primary: #5b21b6;
+            --theme-accent: #a78bfa;
+            --theme-bg: #1e1b4b;
+            --theme-text: #f8fafc;
+            --page-bg: #f5f3ff;
+            --card-bg: #ffffff;
+            --sidebar-bg: #1e1b4b;
+            --header-bg: #5b21b6;
+            --header-text: #f8fafc;
+            --btn-bg: #a78bfa;
+            --link-color: #f8fafc;
+            --active-bg: rgba(167,139,250,0.12);
+            --active-text: #fff;
+            --content-text: #f8fafc;
+        }
+
+        [data-theme='rose-gold'] {
+            --theme-primary: #881337;
+            --theme-accent: #fb7185;
+            --theme-bg: #fff1f2;
+            --theme-text: #4c0519;
+            --page-bg: #fff1f2;
+            --card-bg: #ffffff;
+            --sidebar-bg: #fff1f2;
+            --header-bg: #881337;
+            --header-text: #ffffff;
+            --btn-bg: #fb7185;
+            --link-color: #4c0519;
+            --active-bg: rgba(249,114,149,0.12);
+            --active-text: #fff;
+            --content-text: #4c0519;
+        }
+
+        [data-theme='sunset-orange'] {
+            --theme-primary: #1c1917;
+            --theme-accent: #fb923c;
+            --theme-bg: #1c1917;
+            --theme-text: #fff7ed;
+            --page-bg: #fffaf5;
+            --card-bg: #ffffff;
+            --sidebar-bg: #1c1917;
+            --header-bg: #1c1917;
+            --header-text: #fff7ed;
+            --btn-bg: #fb923c;
+            --link-color: #fff7ed;
+            --active-bg: rgba(251,146,60,0.12);
+            --active-text: #fff;
+            --content-text: #0f172a;
+        }
+
+        [data-theme='ocean-blue'] {
+            --theme-primary: #0c4a6e;
+            --theme-accent: #38bdf8;
+            --theme-bg: #0c4a6e;
+            --theme-text: #f0f9ff;
+            --page-bg: #f0f9ff;
+            --card-bg: #ffffff;
+            --sidebar-bg: #0c4a6e;
+            --header-bg: #0c4a6e;
+            --header-text: #f0f9ff;
+            --btn-bg: #38bdf8;
+            --link-color: #f0f9ff;
+            --active-bg: rgba(56,189,248,0.12);
+            --active-text: #fff;
+            --content-text: #0f172a;
+        }
+
+        [data-theme='forest-green'] {
+            --theme-primary: #14532d;
+            --theme-accent: #4ade80;
+            --theme-bg: #14532d;
+            --theme-text: #f0fdf4;
+            --page-bg: #f0fdf4;
+            --card-bg: #ffffff;
+            --sidebar-bg: #14532d;
+            --header-bg: #14532d;
+            --header-text: #f0fdf4;
+            --btn-bg: #4ade80;
+            --link-color: #f0fdf4;
+            --active-bg: rgba(74,222,128,0.12);
+            --active-text: #fff;
+            --content-text: #0f172a;
+        }
+
+        [data-theme='crimson-red'] {
+            --theme-primary: #7f1d1d;
+            --theme-accent: #f87171;
+            --theme-bg: #1c1917;
+            --theme-text: #fef2f2;
+            --page-bg: #fff5f5;
+            --card-bg: #ffffff;
+            --sidebar-bg: #1c1917;
+            --header-bg: #7f1d1d;
+            --header-text: #fef2f2;
+            --btn-bg: #f87171;
+            --link-color: #fef2f2;
+            --active-bg: rgba(248,113,113,0.12);
+            --active-text: #fff;
+            --content-text: #0f172a;
+        }
+
+        [data-theme='gold-standard'] {
+            --theme-primary: #713f12;
+            --theme-accent: #fbbf24;
+            --theme-bg: #713f12;
+            --theme-text: #fffbeb;
+            --page-bg: #fffbeb;
+            --card-bg: #ffffff;
+            --sidebar-bg: #713f12;
+            --header-bg: #713f12;
+            --header-text: #fffbeb;
+            --btn-bg: #fbbf24;
+            --link-color: #fffbeb;
+            --active-bg: rgba(251,191,36,0.12);
+            --active-text: #fff;
+            --content-text: #0f172a;
+        }
+
+        [data-theme='chocolate-brown'] {
+            --theme-primary: #431407;
+            --theme-accent: #d97706;
+            --theme-bg: #431407;
+            --theme-text: #fef3c7;
+            --page-bg: #fffbf0;
+            --card-bg: #ffffff;
+            --sidebar-bg: #431407;
+            --header-bg: #431407;
+            --header-text: #fef3c7;
+            --btn-bg: #d97706;
+            --link-color: #fef3c7;
+            --active-bg: rgba(217,119,6,0.12);
+            --active-text: #fff;
+            --content-text: #0f172a;
+        }
+
+        * {
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--page-bg);
+            color: var(--theme-text);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app-shell {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #content-wrapper {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            height: 100vh;
+            overflow-y: auto;
+            padding: 40px;
+            position: relative;
+            z-index: 10;
+            scroll-behavior: smooth;
+        }
+
+        /* Admin Overrides */
+        #header,
+        .breadcrumbs,
+        #branding,
+        .module h2 {
+            display: none !important;
+        }
+
+        #container {
+            width: 100% !important;
+            margin: 0 !important;
+            max-width: none !important;
+            background: transparent !important;
+        }
+
+        .module,
+        #changelist {
+            background: var(--card-bg) !important;
+            border-radius: 20px !important;
+            border: 1px solid var(--border-color) !important;
+            padding: 24px !important;
+            margin-bottom: 24px !important;
+        }
+
+        table {
+            width: 100% !important;
+            border-spacing: 0 !important;
+        }
+
+        thead th {
+            background: #f8fafc !important;
+            padding: 16px 20px !important;
+            color: #475569 !important;
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-color) !important;
+        }
+
+        tbody td {
+            padding: 16px 20px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            font-size: 14px;
+            color: #1e293b !important;
+        }
+
+        .fms-sidebar-fixed {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            color: var(--theme-text);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-group-title {
+            padding: 24px 24px 10px;
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--theme-text);
+            opacity: 0.4;
+            letter-spacing: 0.15em;
+            font-weight: 800;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 18px;
+            margin: 0 12px 4px;
+            color: var(--link-color);
+            opacity: 0.6;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 10px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            opacity: 1;
+        }
+
+        .nav-item.active {
+            background: var(--active-bg);
+            color: var(--active-text);
+            opacity: 1;
+            font-weight: 600;
+        }
+
+        .sidebar-swatch-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            padding: 0 20px 20px;
+        }
+
+        .swatch-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .swatch-btn.active {
+            border-color: white;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* Global overrides so components respect theme vars even when templates add utility classes */
+        #content-wrapper header {
+            background: var(--header-bg);
+            color: var(--header-text);
+            padding: 20px 0;
+        }
+
+        .card.bg-white { background: var(--card-bg) !important; }
+        #content-wrapper .bg-white { background: var(--card-bg) !important; color: inherit !important; }
+
+        .btn-primary { background: var(--btn-bg) !important; color: #fff !important; }
+        #content-wrapper a { color: var(--link-color) !important; }
+
+        /* Ensure readable content text across themes without overriding button text */
+        #content-wrapper h1, #content-wrapper h2, #content-wrapper h3, #content-wrapper h4, #content-wrapper h5, #content-wrapper h6,
+        #content-wrapper p, #content-wrapper label, #content-wrapper li, #content-wrapper td, #content-wrapper th, #content-wrapper span, #content-wrapper small {
+            color: var(--content-text) !important;
+        }
+
+        /* Link hover color */
+        #content-wrapper a:hover { color: var(--btn-bg) !important; }
+
+        /* Input placeholders (subtle contrast) */
+        #content-wrapper input::placeholder, #content-wrapper textarea::placeholder { color: rgba(15,23,42,0.45); }
+
+        /* Collapsible sidebar support */
+        .fms-sidebar-fixed { transform: translateX(0); transition: transform 0.3s ease; }
+        body.sidebar-collapsed .fms-sidebar-fixed { transform: translateX(-280px); }
+        body.sidebar-collapsed #content-wrapper { margin-left: 40px; }
+        @media (max-width: 768px) {
+            body.sidebar-collapsed .fms-sidebar-fixed { transform: translateX(-100%); }
+            body.sidebar-collapsed #content-wrapper { margin-left: 0; }
+        }
+    </style>
+</head>
+
+<body x-data="sidebarState()" x-init="init()">
+
+    <div id="app-shell">
+
+        <aside class="fms-sidebar-fixed shadow-2xl">
+            <div class="h-24 flex items-center px-10 border-b border-white/5">
+                <span class="font-black tracking-tighter text-3xl text-white">FMS <span
+                        class="opacity-50">PRO</span></span>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-8">
+                {% for group in SIDEBAR_CONFIG %}
+                <div class="nav-group">
+                    <h3 class="nav-group-title">{{ group.title }}</h3>
+                    <div class="space-y-1">
+                        {% for item in group.items %}
+                        {% if item.action %}
+                        <a href="{{ item.url|default:'#' }}" onclick="{{ item.action }}" class="nav-item w-[calc(100%-24px)] text-left">
+                            <span class="mr-3">{{ item.icon }}</span><span>{{ item.label }}</span>
+                        </a>
+                        {% else %}
+                        <a href="{{ item.url }}" class="nav-item {% if item.is_active %}active{% endif %}">
+                            <span class="mr-3">{{ item.icon }}</span><span>{{ item.label }}</span>
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </nav>
+
+            <div class="mt-auto">
+                <h3 class="nav-group-title">Theme Selection</h3>
+                <div class="sidebar-swatch-grid">
+                    <template x-for="t in themes" :key="t.key">
+                        <div @click="setTheme(t.key)" class="swatch-btn" :class="currentTheme === t.key ? 'active' : ''"
+                            :style="`background-color: ${t.color}`"></div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="p-8 border-t border-white/5 bg-black/10 flex items-center justify-between">
+                <div class="flex items-center gap-4 overflow-hidden">
+                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-xs shadow-lg border border-white/10"
+                        :style="`background-color: var(--theme-accent)`">{{ user.username|slice:":1"|upper }}</div>
+                    <div class="flex flex-col truncate">
+                        <span class="text-xs font-black uppercase tracking-tight text-white">{{ user.username }}</span>
+                        <span class="text-[10px] font-bold opacity-40 uppercase tracking-widest text-white">Admin</span>
+                    </div>
+                </div>
+                <a href="{% url 'fees:logout' %}" hx-boost="false"
+                    class="text-rose-400 hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                        </path>
+                    </svg>
+                </a>
+            </div>
+        </aside>
+
+        <div id="content-wrapper">
+            <header class="flex items-center justify-between mb-10">
+                <div>
+                    <h1 class="text-3xl font-black text-slate-900 tracking-tight">{% block header_title %}{% endblock %}
+                    </h1>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Academics Management
+                        Console</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" aria-label="Toggle sidebar" title="Toggle sidebar"
+                        class="p-2 rounded-md md:hidden bg-white/10 text-white" onclick="document.body.classList.toggle('sidebar-collapsed')">
+                        ☰
+                    </button>
+                </div>
+                <div
+                    class="px-6 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm text-[11px] font-black text-slate-500 uppercase tracking-widest">
+                    {% now "l, F j, Y" %}
+                </div>
+            </header>
+                        <div id="universal-content">
+                                {% block messages %}
+                                {% if messages %}
+                                    <ul class="messagelist">
+                                        {% for message in messages %}
+                                            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                                {% endblock messages %}
+                                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('htmx:afterOnLoad', function (evt) {
+            const path = window.location.pathname;
+            document.querySelectorAll('.nav-item').forEach(el => {
+                const href = el.getAttribute('href');
+                if (href && (path === href || (href !== '/' && path.startsWith(href)))) { el.classList.add('active'); }
+                else { el.classList.remove('active'); }
+            });
+        });
+    </script>
+</body>
+
+</html>
