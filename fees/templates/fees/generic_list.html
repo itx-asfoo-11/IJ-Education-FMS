@@ -57,7 +57,7 @@
     <div class="flex gap-4 mb-6">
         <select id="classFilter"
             class="px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
-            <option value="">All Classes ({{ objects|length }} students)</option>
+            <option value="">All Classes ({{ total_students }} students)</option>
             {% for class_num in available_classes %}
             <option value="{{ class_num }}" {% if selected_class == class_num %}selected{% endif %}>
                 Class {{ class_num }}
@@ -197,12 +197,6 @@
                                     {% else %}
                                         <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Locked</span>
                                     {% endif %}
-                                {% endif %}
-
-                                <!-- Delete Checkbox (Hidden for Fee Records) -->
-                                {% if not readonly and model_name != 'feerecord' %}
-                                <input type="checkbox" name="selected_items" value="{{ obj.pk }}"
-                                    class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                                 {% endif %}
                             </div>
                         </td>

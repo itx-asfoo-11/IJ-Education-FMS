@@ -187,32 +187,18 @@ def manage_list(request, model_name):
             except Exception:
                 ids_int = ids
 
-            # If deleting students, prevent deleting ones with related FeeRecord or FeePayment
-            if model_name == 'student':
-                blocked_ids = set()
-                # check fee records
-                blocked_ids.update(FeeRecord.objects.filter(student_id__in=ids_int).values_list('student_id', flat=True))
-                # check fee payments
-                blocked_ids.update(FeePayment.objects.filter(student_id__in=ids_int).values_list('student_id', flat=True))
-
-                deletable = [i for i in ids_int if i not in blocked_ids]
-
-                if deletable:
-                    model.objects.filter(pk__in=deletable).delete()
-                    messages.success(request, f"Deleted {len(deletable)} {model_name}(s) successfully.")
-
-                if blocked_ids:
-                    messages.error(request, f"Cannot delete students with ids: {', '.join(map(str, blocked_ids))}. They have related records.")
-            else:
-                try:
-                    model.objects.filter(pk__in=ids_int).delete()
-                    messages.success(request, f"Selected {title} deleted successfully.")
-                except Exception:
-                    messages.error(request, f"Cannot delete this {model_name}. It may have related records. Please delete related records first.")
+            try:
+                model.objects.filter(pk__in=ids_int).delete()
+                messages.success(request, f"Selected {title} deleted successfully.")
+            except Exception:
+                messages.error(request, f"Cannot delete this {model_name}. It may have related records. Please delete related records first.")
 
         return redirect('fees:manage_list', model_name=model_name)
 
     objects = model.objects.all()
+    
+    # Initialize total_students for all models (default to 0)
+    total_students = 0
     
     available_classes = []
     selected_class = None
@@ -224,6 +210,9 @@ def manage_list(request, model_name):
             available_classes = [int(c) for c in available_classes if c]  # Convert to int, remove None
         except:
             available_classes = []
+        
+        # Get TOTAL student count BEFORE filtering
+        total_students = Student.objects.count()
         
         # Get selected class from query parameter
         selected_class = request.GET.get('class', '')
@@ -260,6 +249,7 @@ def manage_list(request, model_name):
         'readonly': readonly,
         'available_classes': available_classes,
         'selected_class': selected_class,
+        'total_students': total_students,
     })
 
 
